@@ -33,7 +33,7 @@ namespace Secp256k1Net
         static string GetPlatformDesc((OSPlatform OS, Architecture Arch) info) => $"{info.OS}; {info.Arch}";
 
         static readonly OSPlatform CurrentOSPlatform = SupportedPlatforms.FirstOrDefault(IsOSPlatform);
-        static readonly PlatInfo CurrentPlatformInfo = (CurrentOSPlatform, ProcessArchitecture);
+        static PlatInfo CurrentPlatformInfo = (CurrentOSPlatform, ProcessArchitecture);
         static readonly Lazy<string> CurrentPlatformDesc = new Lazy<string>(() => GetPlatformDesc((CurrentOSPlatform, ProcessArchitecture)));
 
         static readonly ConcurrentDictionary<PlatInfo, string> Cache = new ConcurrentDictionary<PlatInfo, string>();
@@ -42,6 +42,11 @@ namespace Secp256k1Net
 
         public static string Resolve(string library)
         {
+            if(CurrentPlatformInfo.Item1 == OSPlatform.Linux)
+            {
+                CurrentPlatformInfo.Item2 = Architecture.X86;
+            }
+
             if (Cache.TryGetValue(CurrentPlatformInfo, out string result))
             {
                 return result;
@@ -52,11 +57,31 @@ namespace Secp256k1Net
             }
 
             var searchedPaths = new HashSet<string>();
+            /*
+             * GetExecutingAssembly=/data/app/~~BaPnRn5raiJMK9Q2FZAzxA==/com.nine.chro-v7ZMGMLVOGBKdEGVkxU_Og==/
+             * base.apk/assets/bin/Data/Managed/Secp256k1.Net.dll
+             * 
+             * Console.WriteLine($"GetExecutingAssembly={Assembly.GetExecutingAssembly().Location}");
+             */
+
+            if(CurrentPlatformInfo.Item1 == OSPlatform.Linux)
+            {
+                string[] separator = new string[] { "/base.apk" };
+                string prefix = Assembly.GetExecutingAssembly().Location.Split(separator, StringSplitOptions.RemoveEmptyEntries)[0];
+                string suspiciousPath = Path.Combine(prefix, "lib","arm", "libsecp256k1.so");
+                Console.WriteLine($"suspiciousPath={suspiciousPath}");
+                if (!searchedPaths.Contains(suspiciousPath) && File.Exists(suspiciousPath))
+                {
+                    Cache.TryAdd(CurrentPlatformInfo, suspiciousPath);
+                    return suspiciousPath;
+                }
+            }
 
             foreach (var containerDir in GetSearchLocations())
             {
                 foreach (var libPath in SearchContainerPaths(containerDir, library, platform))
                 {
+                    Console.WriteLine($"256k1.net try libPath={libPath}");
                     if (!searchedPaths.Contains(libPath) && File.Exists(libPath))
                     {
                         Cache.TryAdd(CurrentPlatformInfo, libPath);
