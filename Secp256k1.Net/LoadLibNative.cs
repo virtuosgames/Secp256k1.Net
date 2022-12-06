@@ -11,7 +11,7 @@ namespace Secp256k1Net
     {
         static readonly bool IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         static readonly bool IsMacOS = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-        static readonly bool IsLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+        static readonly bool IsLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || UnityPathHelper.OS == OSPlatform.Linux;
 
         public static IntPtr LoadLib(string libPath)
         {

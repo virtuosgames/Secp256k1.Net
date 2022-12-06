@@ -12,6 +12,25 @@ using System.Collections.Concurrent;
 
 namespace Secp256k1Net
 {
+    public static class UnityPathHelper
+    {
+        internal static string SuspiciousPath = default;
+        internal static Architecture Arch = default;
+        internal static OSPlatform OS = default;
+        /// <summary>
+        /// Use specific path to load native library
+        /// </summary>
+        /// <param name="nativeLibPath">Absolute path refer to native lib (include lib name and its extension).</param>
+        public static void SetSpecificPath(string nativeLibPath, OSPlatform operationSystem, Architecture architecture)
+        {
+            SuspiciousPath = nativeLibPath;
+            OS = operationSystem;
+            Arch = architecture;
+        }
+
+        internal static bool UseSpecificPath() => SuspiciousPath != default;
+    }
+
     public static class LibPathResolver
     {
 
@@ -42,9 +61,9 @@ namespace Secp256k1Net
 
         public static string Resolve(string library)
         {
-            if(CurrentPlatformInfo.Item1 == OSPlatform.Linux)
+            if(UnityPathHelper.UseSpecificPath())
             {
-                CurrentPlatformInfo.Item2 = Architecture.X86;
+                return UnityPathHelper.SuspiciousPath;
             }
 
             if (Cache.TryGetValue(CurrentPlatformInfo, out string result))
@@ -64,18 +83,7 @@ namespace Secp256k1Net
              * Console.WriteLine($"GetExecutingAssembly={Assembly.GetExecutingAssembly().Location}");
              */
 
-            if(CurrentPlatformInfo.Item1 == OSPlatform.Linux)
-            {
-                string[] separator = new string[] { "/base.apk" };
-                string prefix = Assembly.GetExecutingAssembly().Location.Split(separator, StringSplitOptions.RemoveEmptyEntries)[0];
-                string suspiciousPath = Path.Combine(prefix, "lib","arm", "libsecp256k1.so");
-                Console.WriteLine($"suspiciousPath={suspiciousPath}");
-                if (!searchedPaths.Contains(suspiciousPath) && File.Exists(suspiciousPath))
-                {
-                    Cache.TryAdd(CurrentPlatformInfo, suspiciousPath);
-                    return suspiciousPath;
-                }
-            }
+            
 
             foreach (var containerDir in GetSearchLocations())
             {

@@ -151,7 +151,7 @@ namespace Secp256k1Net
     [SymbolName(nameof(secp256k1_ecdsa_signature_serialize_der))]
     public unsafe delegate int secp256k1_ecdsa_signature_serialize_der(IntPtr ctx,
         void* output, // unsigned char *output
-        ref uint outputlen, // size_t *outputlen
+        ref ulong outputlen, // size_t *outputlen
         void* sig  // const secp256k1_ecdsa_signature* sig        
     );
 
