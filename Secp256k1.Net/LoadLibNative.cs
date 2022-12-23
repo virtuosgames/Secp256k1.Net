@@ -33,7 +33,9 @@ namespace Secp256k1Net
             }
             else
             {
-                throw new Exception($"Unsupported platform: {RuntimeInformation.OSDescription}. The supported platforms are: {string.Join(", ", new[] { OSPlatform.Windows, OSPlatform.OSX, OSPlatform.Linux })}");
+                //throw new Exception($"Unsupported platform: {RuntimeInformation.OSDescription}. The supported platforms are: {string.Join(", ", new[] { OSPlatform.Windows, OSPlatform.OSX, OSPlatform.Linux })}");
+                const int RTLD_NOW = 2;
+                libPtr = DynamicLinkingPosix.dlopen(libPath, RTLD_NOW);
             }
             if (libPtr == IntPtr.Zero)
             {
@@ -63,7 +65,7 @@ namespace Secp256k1Net
             }
             else
             {
-                throw new Exception("Unsupported platform");
+                DynamicLinkingPosix.dlclose(lib);
             }
         }
 
@@ -86,7 +88,7 @@ namespace Secp256k1Net
                 }
                 else
                 {
-                    throw new Exception("Unsupported platform");
+                    errorPtr = DynamicLinkingPosix.dlerror();
                 }
                 if (errorPtr == IntPtr.Zero)
                 {
@@ -113,7 +115,7 @@ namespace Secp256k1Net
             }
             else
             {
-                throw new Exception("Unsupported platform");
+                functionPtr = DynamicLinkingPosix.dlsym(libPtr, symbolName);
             }
 
             if (functionPtr == IntPtr.Zero)
